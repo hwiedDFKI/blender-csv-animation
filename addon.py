@@ -5,6 +5,7 @@ import math
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, FloatProperty
+import numpy as np
 
 bl_info = {
     "name": "Export > CSV Animation Exporter (.csv)",
@@ -58,30 +59,38 @@ def export_animation(context, folder_path):
                 quotechar='|',
                 quoting=csv.QUOTE_MINIMAL
             )
-            prev_x, prev_y, prev_z = 0, 0, 0
+            matrix = np.array([
+                [11, 12, 13, 14],
+                [21, 22, 23, 24],
+                [31, 32, 33, 34],
+                [41, 42, 43, 44]
+            ])
+            animation_file_writer.writerow([
+                "frame_number",
+                *np.concatenate(np.array(matrix).tolist()).tolist(),
+            ])
+            # prev_x, prev_y, prev_z = 0, 0, 0
             for frame_number in range(frame_start, frame_end + 1):
                 scene.frame_set(frame_number)
-                rgb = get_rgb_from_object(obj)
+                # rgb = get_rgb_from_object(obj)
                 world_matrix = obj.matrix_world.copy()
-                translation_matrix = world_matrix.to_translation()
-                x, y, z = translation_matrix[:]
-                speed = calc_speed(
-                    (x, y, z),
-                    (prev_x, prev_y, prev_z)
-                ) if frame_number != frame_start else 1
-                if speed > 3:
-                    bpy.context.window_manager.popup_menu(
-                        popup_speed_error_menu,
-                        title="Error",
-                        icon='ERROR'
-                    )
-                prev_x, prev_y, prev_z = x, y, z
+                values = np.concatenate(np.array(world_matrix).tolist()).tolist()
+                # translation_matrix = world_matrix.to_translation()
+                # x, y, z = translation_matrix[:]
+                # speed = calc_speed(
+                #     (x, y, z),
+                #     (prev_x, prev_y, prev_z)
+                # ) if frame_number != frame_start else 1
+                # if speed > 3:
+                #     bpy.context.window_manager.popup_menu(
+                #         popup_speed_error_menu,
+                #         title="Error",
+                #         icon='ERROR'
+                #     )
+                # prev_x, prev_y, prev_z = x, y, z
                 animation_file_writer.writerow([
                     str(frame_number),
-                    x, y, z,
-                    speed,
-                    *rgb,
-                    str(obj.rotation_euler.z),
+                    *values,
                 ])
     return {'FINISHED'}
 
